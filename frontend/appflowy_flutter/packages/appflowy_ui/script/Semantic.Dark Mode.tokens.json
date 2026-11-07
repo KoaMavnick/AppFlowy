@@ -22,11 +22,11 @@
     },
     "action": {
       "$type": "color",
-      "$value": "{Blue.500}"
+      "$value": "{Neutral.200}"
     },
     "action-hover": {
       "$type": "color",
-      "$value": "{Blue.400}"
+      "$value": "{Neutral.100}"
     },
     "info": {
       "$type": "color",
@@ -158,11 +158,11 @@
     },
     "theme-thick": {
       "$type": "color",
-      "$value": "{Blue.500}"
+      "$value": "{Neutral.200}"
     },
     "theme-thick-hover": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Neutral.100}"
     },
     "info-thick": {
       "$type": "color",
@@ -266,19 +266,19 @@
     },
     "theme-thick": {
       "$type": "color",
-      "$value": "{Blue.500}"
+      "$value": "{Neutral.200}"
     },
     "theme-thick-hover": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Neutral.100}"
     },
     "theme-select": {
       "$type": "color",
-      "$value": "{Blue.alpha-blue-500-15}"
+      "$value": "#ffffff1a"
     },
     "text-select": {
       "$type": "color",
-      "$value": "{Blue.alpha-blue-500-20}"
+      "$value": "#ffffff33"
     },
     "info-light": {
       "$type": "color",
@@ -352,55 +352,55 @@
   "Surface": {
     "primary": {
       "$type": "color",
-      "$value": "{Neutral.900}"
+      "$value": "#202020"
     },
     "primary-hover": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#2a2a2a"
     },
     "layer-01": {
       "$type": "color",
-      "$value": "{Neutral.900}",
+      "$value": "#202020",
       "$description": "Settings Window"
     },
     "layer-01-hover": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#2a2a2a"
     },
     "layer-02": {
       "$type": "color",
-      "$value": "{Neutral.850}",
+      "$value": "#252525",
       "$description": "Settings Side Panel, Modal Window"
     },
     "layer-02-hover": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#2f2f2f"
     },
     "layer-03": {
       "$type": "color",
-      "$value": "{Neutral.850}",
+      "$value": "#252525",
       "$description": "Dialog"
     },
     "layer-03-hover": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#2f2f2f"
     },
     "layer-04": {
       "$type": "color",
-      "$value": "{Neutral.830}",
+      "$value": "#2c2c2c",
       "$description": "Dropdown Menu"
     },
     "layer-04-hover": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#333333"
     },
     "inverse": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#f7f7f5"
     },
     "secondary": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#ededec"
     },
     "overlay": {
       "$type": "color",
@@ -410,21 +410,21 @@
   "Surface_Container": {
     "layer-01": {
       "$type": "color",
-      "$value": "{Neutral.900}"
+      "$value": "#202020"
     },
     "layer-02": {
       "$type": "color",
-      "$value": "{Neutral.800}"
+      "$value": "#2a2a2a"
     },
     "layer-03": {
       "$type": "color",
-      "$value": "{Neutral.700}"
+      "$value": "#333333"
     }
   },
   "Background": {
     "primary": {
       "$type": "color",
-      "$value": "{Neutral.1000}"
+      "$value": "#191919"
     }
   },
   "Badge": {
@@ -952,11 +952,11 @@
   "Brand": {
     "Skyline": {
       "$type": "color",
-      "$value": "#00b5ff"
+      "$value": "#ededec"
     },
     "Aqua": {
       "$type": "color",
-      "$value": "#00c8ff"
+      "$value": "#9b9b9b"
     },
     "Violet": {
       "$type": "color",
@@ -990,7 +990,7 @@
   "Other_Colors": {
     "text-highlight": {
       "$type": "color",
-      "$value": "{Blue.200}"
+      "$value": "#5c4e2a"
     }
   },
   "Spacing": {

@@ -22,11 +22,11 @@
     },
     "action": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Neutral.1000}"
     },
     "action-hover": {
       "$type": "color",
-      "$value": "{Blue.700}"
+      "$value": "{Neutral.900}"
     },
     "info": {
       "$type": "color",
@@ -158,11 +158,11 @@
     },
     "theme-thick": {
       "$type": "color",
-      "$value": "{Blue.500}"
+      "$value": "{Neutral.1000}"
     },
     "theme-thick-hover": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Neutral.900}"
     },
     "info-thick": {
       "$type": "color",
@@ -266,19 +266,19 @@
     },
     "theme-thick": {
       "$type": "color",
-      "$value": "{Blue.500}"
+      "$value": "{Neutral.1000}"
     },
     "theme-thick-hover": {
       "$type": "color",
-      "$value": "{Blue.600}"
+      "$value": "{Neutral.900}"
     },
     "theme-select": {
       "$type": "color",
-      "$value": "{Blue.alpha-blue-500-15}"
+      "$value": "#37352f1a"
     },
     "text-select": {
       "$type": "color",
-      "$value": "{Blue.alpha-blue-500-20}"
+      "$value": "#37352f33"
     },
     "info-light": {
       "$type": "color",
@@ -952,11 +952,11 @@
   "Brand": {
     "Skyline": {
       "$type": "color",
-      "$value": "#00b5ff"
+      "$value": "#37352f"
     },
     "Aqua": {
       "$type": "color",
-      "$value": "#00c8ff"
+      "$value": "#9b9a97"
     },
     "Violet": {
       "$type": "color",
@@ -990,7 +990,7 @@
   "Other_Colors": {
     "text-highlight": {
       "$type": "color",
-      "$value": "{Blue.200}"
+      "$value": "#fdecc8"
     }
   },
   "Spacing": {

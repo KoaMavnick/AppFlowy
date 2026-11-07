@@ -7,7 +7,6 @@ import 'package:flowy_infra/theme_extension.dart';
 import 'package:flutter/material.dart';
 
 class MobileAppearance extends BaseAppearance {
-  static const _primaryColor = Color(0xFF00BCF0); //primary 100
   static const _onBackgroundColor = Color(0xff2F3030); // text/title color
   static const _onSurfaceColor = Color(0xff676666); // text/body color
   static const _onSecondaryColor = Color(0xFFC5C7CB); // text/body2 color
@@ -29,6 +28,7 @@ class MobileAppearance extends BaseAppearance {
     );
 
     final isLight = brightness == Brightness.light;
+    final accent = isLight ? const Color(0xFF37352F) : const Color(0xFFEDEDEC);
     final codeFontStyle = getFontStyle(fontFamily: codeFontFamily);
 
     final theme = isLight ? appTheme.lightTheme : appTheme.darkTheme;
@@ -36,7 +36,7 @@ class MobileAppearance extends BaseAppearance {
     final colorTheme = isLight
         ? ColorScheme(
             brightness: brightness,
-            primary: _primaryColor,
+            primary: accent,
             onPrimary: Colors.white,
             // group card header background color
             primaryContainer: const Color(0xffF1F1F4), // primary 20
@@ -56,7 +56,7 @@ class MobileAppearance extends BaseAppearance {
           )
         : ColorScheme(
             brightness: brightness,
-            primary: _primaryColor,
+            primary: accent,
             onPrimary: Colors.black,
             secondary: const Color(0xff2d2d2d), //temp
             onSecondary: Colors.white,
@@ -120,7 +120,7 @@ class MobileAppearance extends BaseAppearance {
           backgroundColor: WidgetStateProperty.resolveWith<Color>(
             (Set<WidgetState> states) {
               if (states.contains(WidgetState.disabled)) {
-                return _primaryColor;
+                return accent;
               }
               return colorTheme.primary;
             },
@@ -157,8 +157,8 @@ class MobileAppearance extends BaseAppearance {
       // text
       fontFamily: fontStyle.fontFamily,
       textTheme: TextTheme(
-        displayLarge: const TextStyle(
-          color: _primaryColor,
+        displayLarge: TextStyle(
+          color: accent,
           fontSize: 32,
           fontWeight: FontWeight.w700,
           height: 1.20,
@@ -207,10 +207,10 @@ class MobileAppearance extends BaseAppearance {
       ),
       inputDecorationTheme: InputDecorationTheme(
         contentPadding: const EdgeInsets.all(8),
-        focusedBorder: const OutlineInputBorder(
+        focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(
             width: 2,
-            color: _primaryColor,
+            color: accent,
           ),
           borderRadius: BorderRadius.all(Radius.circular(6)),
         ),

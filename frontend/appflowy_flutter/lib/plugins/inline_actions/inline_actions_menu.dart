@@ -221,17 +221,17 @@ class InlineActionsMenuStyle {
 
   const InlineActionsMenuStyle.light()
       : backgroundColor = Colors.white,
-        groupTextColor = const Color(0xFF555555),
-        menuItemTextColor = const Color(0xFF333333),
-        menuItemSelectedColor = const Color(0xFFE0F8FF),
-        menuItemSelectedTextColor = const Color.fromARGB(255, 56, 91, 247);
+        groupTextColor = const Color(0xFF787774),
+        menuItemTextColor = const Color(0xFF37352F),
+        menuItemSelectedColor = const Color(0xFFF1F1EF),
+        menuItemSelectedTextColor = const Color(0xFF37352F);
 
   const InlineActionsMenuStyle.dark()
-      : backgroundColor = const Color(0xFF282E3A),
-        groupTextColor = const Color(0xFFBBC3CD),
-        menuItemTextColor = const Color(0xFFBBC3CD),
-        menuItemSelectedColor = const Color(0xFF00BCF0),
-        menuItemSelectedTextColor = const Color(0xFF131720);
+      : backgroundColor = const Color(0xFF252525),
+        groupTextColor = const Color(0xFF9B9B9B),
+        menuItemTextColor = const Color(0xFFEDEDEC),
+        menuItemSelectedColor = const Color(0xFF2F2F2F),
+        menuItemSelectedTextColor = const Color(0xFFEDEDEC);
 
   /// The background color of the context menu itself
   ///
