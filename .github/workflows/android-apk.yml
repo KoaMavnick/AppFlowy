@@ -42,6 +42,13 @@ jobs:
         with:
           targets: aarch64-linux-android
 
+      - name: Cache the Android Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/rust-lib
+          shared-key: android-arm64
+          cache-on-failure: "true"
+
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -113,7 +120,7 @@ jobs:
 
       - name: Collect the APK
         run: |
-          src="frontend/appflowy_flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
+          src="frontend/appflowy_flutter/build/app/outputs/flutter-apk/app-release.apk"
           if [ ! -f "$src" ]; then
             src="$(find frontend/appflowy_flutter/build/app/outputs/flutter-apk -name '*.apk' | head -n 1)"
           fi
