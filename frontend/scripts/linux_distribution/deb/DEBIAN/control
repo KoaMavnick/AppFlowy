@@ -1,6 +1,6 @@
 Package: AppFlowy
 Version: [CHANGE_THIS]
-Depends: libkeybinder-3.0-0
+Depends: libkeybinder-3.0-0, libgtk-3-0, libnotify4, libsecret-1-0
 Architecture: amd64
 Essential: no
 Priority: optional

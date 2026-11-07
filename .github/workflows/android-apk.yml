@@ -1,4 +1,4 @@
-name: Android APK
+name: Installers
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: android-apk-${{ github.ref }}
+  group: installers-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -49,20 +49,23 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      - name: Install Android SDK and NDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install NDK r24
+      - name: Install NDK
         run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --install "ndk;${NDK_VERSION}" "platforms;android-35" "build-tools;35.0.0"
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
-          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          SM="$(find "$SDK/cmdline-tools" -type f -path '*/bin/sdkmanager' | sort | tail -n 1)"
+          test -n "$SM"
+          yes | "$SM" --sdk_root="$SDK" --licenses >/dev/null || true
+          "$SM" --sdk_root="$SDK" --install "ndk;${NDK_VERSION}" "platforms;android-35" "build-tools;35.0.0"
+          echo "ANDROID_NDK_HOME=$SDK/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$SDK/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
 
       - name: NDK clang libgcc shim
         run: |
-          root="$ANDROID_SDK_ROOT/ndk/${NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang"
+          root="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang"
           linux_dir="$(find "$root" -type d -path '*/lib/linux' | head -n 1)"
+          test -n "$linux_dir"
           for arch in aarch64 arm i386 x86_64; do
             mkdir -p "$linux_dir/$arch"
             printf 'INPUT(-lunwind)\n' > "$linux_dir/$arch/libgcc.a"
@@ -87,7 +90,7 @@ jobs:
           cargo make appflowy-flutter-deps-tools
           cargo make --profile development-android appflowy-android-dev
 
-      - name: Name the install file
+      - name: Collect the APK
         run: |
           src="frontend/appflowy_flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
           if [ ! -f "$src" ]; then
@@ -96,22 +99,116 @@ jobs:
           test -n "$src"
           cp "$src" AppFlowy.apk
 
-      - name: Remove the previous APK from the release
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: AppFlowy.apk
+          if-no-files-found: error
+
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
+          sudo docker image prune --all --force
+          df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.85
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libssl-dev libsqlite3-dev clang cmake ninja-build protobuf-compiler libgtk-3-dev libcurl4-openssl-dev keybinder-3.0 libnotify-dev libsecret-1-dev
+          cargo install --force --locked duckscript_cli
+          cargo install --force --locked cargo-make --version ${{ env.CARGO_MAKE_VERSION }}
+          dart pub global activate protoc_plugin 21.1.2
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - name: Build the Linux app
+        working-directory: frontend
+        env:
+          FLUTTER_DESKTOP_FEATURES: dart,openssl_vendored
+        run: |
+          flutter config --enable-linux-desktop
+          cargo make appflowy-flutter-deps-tools
+          cargo make --profile production-linux-x86_64 appflowy-core-release
+          cargo make --profile production-linux-x86_64 code_generation
+          cargo make --profile production-linux-x86_64 set-app-version
+          cargo make --profile production-linux-x86_64 flutter-build
+          cargo make --profile production-linux-x86_64 copy-to-product
+
+      - name: Build the Debian package
+        working-directory: frontend
+        run: |
+          sh scripts/linux_distribution/deb/build_deb.sh appflowy_flutter/product/0.11.4/linux/Release 0.11.4 AppFlowy.deb
+          test -f appflowy_flutter/product/0.11.4/linux/Release/AppFlowy.deb
+          cp appflowy_flutter/product/0.11.4/linux/Release/AppFlowy.deb "$GITHUB_WORKSPACE/AppFlowy.deb"
+
+      - name: Upload Debian package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb
+          path: AppFlowy.deb
+          if-no-files-found: error
+
+  publish:
+    needs: [apk, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Stage installers
+        run: |
+          find dist -name 'AppFlowy.apk' -exec cp {} AppFlowy.apk \;
+          find dist -name 'AppFlowy.deb' -exec cp {} AppFlowy.deb \;
+          test -f AppFlowy.apk
+          test -f AppFlowy.deb
+          ls -lh AppFlowy.apk AppFlowy.deb
+
+      - name: Remove previous files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release delete-asset android AppFlowy.apk --yes --repo "$GITHUB_REPOSITORY" || true
+        run: |
+          gh release delete-asset install AppFlowy.apk --yes --repo "$GITHUB_REPOSITORY" || true
+          gh release delete-asset install AppFlowy.deb --yes --repo "$GITHUB_REPOSITORY" || true
 
-      - name: Publish the APK
+      - name: Publish
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android
-          name: Android
+          tag_name: install
+          name: Install
           target_commitish: ${{ github.sha }}
           make_latest: false
-          files: AppFlowy.apk
+          files: |
+            AppFlowy.apk
+            AppFlowy.deb
           body: |
-            Open this on an Android phone (Android 10 or newer, 64-bit) and tap Install.
+            Android (Android 10 or newer, 64-bit): open AppFlowy.apk on the phone and tap Install.
 
-            https://github.com/${{ github.repository }}/releases/download/android/AppFlowy.apk
+            https://github.com/${{ github.repository }}/releases/download/install/AppFlowy.apk
+
+            Parrot OS and other Debian laptops:
+
+            wget -O AppFlowy.deb https://github.com/${{ github.repository }}/releases/download/install/AppFlowy.deb
+            sudo apt install ./AppFlowy.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
