@@ -1,0 +1,117 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - cursor/notion-sidebar-meetings-26c4
+    paths:
+      - ".github/workflows/android-apk.yml"
+      - "frontend/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  FLUTTER_VERSION: "3.27.4"
+  CARGO_MAKE_VERSION: "0.37.18"
+  NDK_VERSION: "24.0.8215888"
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
+          sudo docker image prune --all --force
+          df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.85
+        with:
+          targets: aarch64-linux-android
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install Android SDK and NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK r24
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install "ndk;${NDK_VERSION}" "platforms;android-35" "build-tools;35.0.0"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - name: NDK clang libgcc shim
+        run: |
+          root="$ANDROID_SDK_ROOT/ndk/${NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/lib64/clang"
+          linux_dir="$(find "$root" -type d -path '*/lib/linux' | head -n 1)"
+          for arch in aarch64 arm i386 x86_64; do
+            mkdir -p "$linux_dir/$arch"
+            printf 'INPUT(-lunwind)\n' > "$linux_dir/$arch/libgcc.a"
+          done
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl build-essential pkg-config libssl-dev clang cmake ninja-build protobuf-compiler
+          cargo install --force --locked duckscript_cli
+          cargo install --force --locked cargo-ndk --version 3.5.4
+          cargo install --force --locked cargo-make --version ${{ env.CARGO_MAKE_VERSION }}
+          dart pub global activate protoc_plugin 21.1.2
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+
+      - name: Build the Android library and APK
+        working-directory: frontend
+        env:
+          RUST_COMPILE_TARGET: aarch64-linux-android
+        run: |
+          mkdir -p appflowy_flutter/android/app/src/main/jniLibs
+          cargo make appflowy-flutter-deps-tools
+          cargo make --profile development-android appflowy-android-dev
+
+      - name: Name the install file
+        run: |
+          src="frontend/appflowy_flutter/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
+          if [ ! -f "$src" ]; then
+            src="$(find frontend/appflowy_flutter/build/app/outputs/flutter-apk -name '*.apk' | head -n 1)"
+          fi
+          test -n "$src"
+          cp "$src" AppFlowy.apk
+
+      - name: Remove the previous APK from the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete-asset android AppFlowy.apk --yes --repo "$GITHUB_REPOSITORY" || true
+
+      - name: Publish the APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android
+          name: Android
+          target_commitish: ${{ github.sha }}
+          make_latest: false
+          files: AppFlowy.apk
+          body: |
+            Open this on an Android phone (Android 10 or newer, 64-bit) and tap Install.
+
+            https://github.com/${{ github.repository }}/releases/download/android/AppFlowy.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
