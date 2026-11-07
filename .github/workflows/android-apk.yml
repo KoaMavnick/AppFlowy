@@ -49,6 +49,12 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
+      - name: Use Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
       - name: Install NDK
         run: |
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
@@ -100,6 +106,8 @@ jobs:
           # NDK compiler headers. The Ubuntu headers do not match this target.
           export BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android="--target=aarch64-linux-android29 --sysroot=${sysroot} -nostdinc -isystem ${clang_include} -isystem ${sysroot}/usr/include -isystem ${sysroot}/usr/include/aarch64-linux-android"
           mkdir -p appflowy_flutter/android/app/src/main/jniLibs
+          java -version
+          flutter config --jdk-dir "$JAVA_HOME"
           cargo make appflowy-flutter-deps-tools
           cargo make --profile development-android appflowy-android-dev
 
