@@ -86,6 +86,11 @@ jobs:
         env:
           RUST_COMPILE_TARGET: aarch64-linux-android
         run: |
+          # frontend/rust-toolchain.toml selects the "1.85" toolchain, which is
+          # separate from the 1.85.1 toolchain installed above. Add the Android
+          # standard library to the toolchain this directory actually uses.
+          rustup target add aarch64-linux-android
+          rustup target list --installed
           mkdir -p appflowy_flutter/android/app/src/main/jniLibs
           cargo make appflowy-flutter-deps-tools
           cargo make --profile development-android appflowy-android-dev
