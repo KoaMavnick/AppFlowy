@@ -6,8 +6,14 @@ import 'package:appflowy/plugins/database/application/field/field_info.dart';
 import 'package:appflowy/plugins/database/application/row/row_service.dart';
 import 'package:appflowy/plugins/database/domain/database_view_service.dart';
 import 'package:appflowy/plugins/database/domain/field_service.dart';
+import 'package:appflowy/plugins/database/domain/filter_service.dart';
+import 'package:appflowy/plugins/database/domain/group_service.dart';
+import 'package:appflowy/plugins/database/domain/select_option_cell_service.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/callout/callout_block_component.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/columns/simple_column_block_component.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/columns/simple_columns_block_component.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/database/database_view_block_component.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/sub_page/sub_page_block_component.dart';
 import 'package:appflowy/shared/icon_emoji_picker/flowy_icon_emoji_picker.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/workspace/application/tabs/tabs_bloc.dart';
@@ -22,10 +28,25 @@ import 'package:flowy_infra_ui/flowy_infra_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:nanoid/nanoid.dart';
 
+const _projectPages = <(String, String)>[
+  ('Aiden Project', '📁'),
+  ('Starting A Software Company', '🚀'),
+  ('Project OGC/08/23', '📌'),
+  ('Journal', '📓'),
+  ('Building the Body', '💪'),
+];
+
+const _ideaPages = <(String, String)>[
+  ('Software ideas to create', '💡'),
+  ('Hardware Ideas', '🔧'),
+  ('Benefits Policies', '📋'),
+];
+
 /// Bottom actions on a blank page, in the same place Notion puts
 /// "Get started with". Database replaces the page with a table, board, or
 /// calendar. Wiki keeps the page, so the title, icon, and cover stay, and
-/// drops in a starter note plus a table that can switch to a board.
+/// fills it with the sample wiki: an intro, a tip, and Project Notes beside
+/// a card view that can switch to a table.
 class EmptyPageStarter extends StatefulWidget {
   const EmptyPageStarter({
     super.key,
@@ -201,67 +222,171 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
         paragraphNode(
           delta: Delta()
             ..insert(
-              'Keep notes, references, and pages together. Each row below is a page you can open.',
+              'Convert all those scattered pages into a Notion database with one click — while keeping the easy-to-read page format.',
             ),
         ),
         calloutNode(
           delta: Delta()
             ..insert(
-              'Add a status and tags so important pages stay easy to find. Replace these sample pages with your own.',
+              'Notion Tip: Use this template to organize information for your company. Add an owner, a verification status, and tags so the right pages stay easy to find. Replace these sample pages with your own.',
             ),
           emoji: EmojiIconData.emoji('💡'),
-        ),
-        headingNode(
-          level: 2,
-          delta: Delta()..insert('Pages'),
         ),
       ]);
     await editor.apply(intro);
 
-    final grid = await ViewBackendService.createView(
-      parentViewId: page.id,
-      name: 'Table',
-      layoutType: ViewLayoutPB.Grid,
-    ).then((result) => result.toNullable());
-    if (grid == null) {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
-      return;
-    }
-
     try {
-      await _applyWikiTemplate(grid.id);
-      final databaseId = await DatabaseViewBackendService(viewId: grid.id)
-          .getDatabaseId()
-          .then((result) => result.toNullable());
-      if (databaseId != null) {
-        await ViewBackendService.createDatabaseLinkedView(
-          parentViewId: grid.id,
-          databaseId: databaseId,
-          layoutType: ViewLayoutPB.Board,
-          name: 'Board',
+      final notes = await _wikiPages(page.id, _projectPages);
+      final ideas = await _wikiPages(page.id, _ideaPages);
+      final built = await _buildWikiDatabase(page.id);
+      final columns = editor.transaction
+        ..insertNode(
+          [2],
+          _wikiColumns(
+            pageId: page.id,
+            notes: notes,
+            ideas: ideas,
+            boardId: built?.boardId,
+          ),
         );
+      await editor.apply(columns);
+      if (built != null) {
+        await Future<void>.delayed(const Duration(milliseconds: 800));
+        await _hideDefaultGroup(built.boardId, wait: true);
+        if (built.secondBoardId != null) {
+          await _hideDefaultGroup(built.secondBoardId!, wait: true);
+        }
       }
     } catch (error) {
       Log.error('Wiki template was only partly applied: $error');
     }
 
-    final block = editor.transaction
-      ..insertNode(
-        [3],
-        Node(
-          type: DatabaseBlockKeys.gridType,
-          attributes: {
-            DatabaseBlockKeys.parentID: page.id,
-            DatabaseBlockKeys.viewID: grid.id,
-          },
-        ),
-      );
-    await editor.apply(block);
     if (mounted) {
       setState(() => _busy = false);
     }
+  }
+
+  Future<List<Node>> _wikiPages(
+    String parentId,
+    List<(String, String)> pages,
+  ) async {
+    final nodes = <Node>[];
+    for (final (name, emoji) in pages) {
+      final view = await ViewBackendService.createView(
+        parentViewId: parentId,
+        name: name,
+        layoutType: ViewLayoutPB.Document,
+      ).then((result) => result.toNullable());
+      if (view == null) {
+        continue;
+      }
+      await ViewBackendService.updateViewIcon(
+        view: view,
+        viewIcon: EmojiIconData.emoji(emoji),
+      );
+      nodes.add(subPageNode(viewId: view.id));
+    }
+    return nodes;
+  }
+
+  Future<({String boardId, String? secondBoardId})?> _buildWikiDatabase(
+    String parentId,
+  ) async {
+    final board = await ViewBackendService.createView(
+      parentViewId: parentId,
+      name: 'Company Updates',
+      layoutType: ViewLayoutPB.Grid,
+    ).then((result) => result.toNullable());
+    if (board == null) {
+      return null;
+    }
+
+    final setup = await _applyWikiTemplate(board.id);
+    final databaseId = await DatabaseViewBackendService(viewId: board.id)
+        .getDatabaseId()
+        .then((result) => result.toNullable());
+    if (databaseId == null) {
+      return (boardId: board.id, secondBoardId: null);
+    }
+
+    final secondBoard = await ViewBackendService.createDatabaseLinkedView(
+      parentViewId: board.id,
+      databaseId: databaseId,
+      layoutType: ViewLayoutPB.Board,
+      name: 'Company Updates',
+    ).then((result) => result.toNullable());
+    final table = await ViewBackendService.createDatabaseLinkedView(
+      parentViewId: board.id,
+      databaseId: databaseId,
+      layoutType: ViewLayoutPB.Grid,
+      name: 'Table',
+    ).then((result) => result.toNullable());
+
+    if (setup != null) {
+      if (secondBoard != null) {
+        await _finishWikiView(
+          secondBoard.id,
+          titleFieldId: setup.titleFieldId,
+          tagsFieldId: setup.tagsFieldId,
+          grouped: true,
+        );
+      }
+      if (table != null) {
+        await _finishWikiView(
+          table.id,
+          titleFieldId: setup.titleFieldId,
+          tagsFieldId: setup.tagsFieldId,
+          grouped: false,
+        );
+      }
+    }
+    await DatabaseViewBackendService.updateLayout(
+      viewId: board.id,
+      layout: DatabaseLayoutPB.Board,
+    );
+    return (boardId: board.id, secondBoardId: secondBoard?.id);
+  }
+
+  Node _wikiColumns({
+    required String pageId,
+    required List<Node> notes,
+    required List<Node> ideas,
+    required String? boardId,
+  }) {
+    return simpleColumnsNode(
+      children: [
+        simpleColumnNode(
+          ratio: 0.34,
+          children: [
+            headingNode(
+              level: 2,
+              delta: Delta()..insert('Project Notes'),
+            ),
+            ...notes,
+            headingNode(
+              level: 2,
+              delta: Delta()..insert('Ideas'),
+            ),
+            ...ideas,
+          ],
+        ),
+        simpleColumnNode(
+          ratio: 0.66,
+          children: [
+            if (boardId == null)
+              paragraphNode()
+            else
+              Node(
+                type: DatabaseBlockKeys.gridType,
+                attributes: {
+                  DatabaseBlockKeys.parentID: pageId,
+                  DatabaseBlockKeys.viewID: boardId,
+                },
+              ),
+          ],
+        ),
+      ],
+    );
   }
 
   Future<void> _replacePage(ViewLayoutPB layout) async {
@@ -298,7 +423,9 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
     await ViewBackendService.deleteView(viewId: source.id);
   }
 
-  Future<void> _applyWikiTemplate(String viewId) async {
+  Future<({String titleFieldId, String? tagsFieldId})?> _applyWikiTemplate(
+    String viewId,
+  ) async {
     final primary = await FieldBackendService.getPrimaryField(viewId: viewId);
     final primaryField = primary.toNullable();
     if (primaryField != null) {
@@ -306,63 +433,153 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
           .updateField(name: 'Title');
     }
 
-    await FieldBackendService.createField(
+    final company = _option('Company Updates', SelectOptionColorPB.Purple);
+    final policies = _option('Policies', SelectOptionColorPB.Pink);
+    final tags = await FieldBackendService.createField(
       viewId: viewId,
       fieldType: FieldType.SingleSelect,
-      fieldName: 'Status',
-      typeOptionData: (SingleSelectTypeOptionPB()
-            ..options.addAll([
-              _option('Draft', SelectOptionColorPB.Yellow),
-              _option('In progress', SelectOptionColorPB.Blue),
-              _option('Verified', SelectOptionColorPB.Green),
-            ]))
-          .writeToBuffer(),
-    );
-    await FieldBackendService.createField(
-      viewId: viewId,
-      fieldType: FieldType.MultiSelect,
       fieldName: 'Tags',
-      typeOptionData: (MultiSelectTypeOptionPB()
-            ..options.addAll([
-              _option('Guide', SelectOptionColorPB.Purple),
-              _option('Reference', SelectOptionColorPB.Orange),
-              _option('How-to', SelectOptionColorPB.Aqua),
-            ]))
+      typeOptionData: (SingleSelectTypeOptionPB()
+            ..options.addAll([company, policies]))
           .writeToBuffer(),
-    );
-    await FieldBackendService.createField(
+    ).then((result) => result.toNullable());
+    final updated = await FieldBackendService.createField(
       viewId: viewId,
-      fieldType: FieldType.LastEditedTime,
+      fieldType: FieldType.DateTime,
       fieldName: 'Updated',
-    );
+      typeOptionData: (DateTypeOptionPB()
+            ..dateFormat = DateFormatPB.Friendly)
+          .writeToBuffer(),
+    ).then((result) => result.toNullable());
 
     if (primaryField != null) {
       final title = FieldInfo.initial(primaryField);
-      for (final page in const [
-        'Welcome',
-        'How to use this wiki',
-        'Team notes',
-      ]) {
-        await RowBackendService.createRow(
+      final updatedInfo = updated == null ? null : FieldInfo.initial(updated);
+      const cards = [
+        _WikiCard(
+          'New Page With Tags',
+          '0xffd3e5ef',
+          2023,
+          8,
+          29,
+        ),
+        _WikiCard('Benefits Policies', '0xfff5e0e9', 2023, 9, 12),
+        _WikiCard('Software ideas to create', '0xffe8deee', 2023, 10, 3),
+        _WikiCard('Hardware Ideas', '0xfffadec9', 2023, 11, 18),
+      ];
+      final tagIds = [company.id, policies.id, company.id, policies.id];
+      for (var i = 0; i < cards.length; i++) {
+        final card = cards[i];
+        final row = await RowBackendService.createRow(
           viewId: viewId,
-          withCells: (builder) => builder.insertText(title, page),
+          withCells: (builder) {
+            builder.insertText(title, card.title);
+            if (updatedInfo != null) {
+              builder.insertDate(
+                updatedInfo,
+                DateTime(card.year, card.month, card.day),
+              );
+            }
+          },
+        ).then((result) => result.toNullable());
+        if (row == null) {
+          continue;
+        }
+        if (tags != null) {
+          final selected = await SelectOptionCellBackendService(
+            viewId: viewId,
+            fieldId: tags.id,
+            rowId: row.id,
+          ).select(optionIds: [tagIds[i]]);
+          selected.fold((_) {}, (error) => Log.error(error));
+        }
+        final cover = await RowBackendService(viewId: viewId).updateMeta(
+          rowId: row.id,
+          cover: RowCoverPB(
+            data: card.cover,
+            uploadType: FileUploadTypePB.LocalFile,
+            coverType: CoverTypePB.ColorCover,
+          ),
         );
+        cover.fold((_) {}, (error) => Log.error(error));
       }
     }
 
     final fields =
         (await FieldBackendService.getFields(viewId: viewId)).toNullable();
-    if (fields == null) {
+    if (fields != null) {
+      const kept = {'Title', 'Tags', 'Updated'};
+      for (final field in fields) {
+        if (!field.isPrimary && !kept.contains(field.name)) {
+          await FieldBackendService.deleteField(
+            viewId: viewId,
+            fieldId: field.id,
+          );
+        }
+      }
+    }
+
+    if (primaryField == null) {
+      return null;
+    }
+    await _finishWikiView(
+      viewId,
+      titleFieldId: primaryField.id,
+      tagsFieldId: tags?.id,
+      grouped: true,
+    );
+    return (titleFieldId: primaryField.id, tagsFieldId: tags?.id);
+  }
+
+  Future<void> _finishWikiView(
+    String viewId, {
+    required String titleFieldId,
+    required String? tagsFieldId,
+    required bool grouped,
+  }) async {
+    final hidden = await FilterBackendService(viewId: viewId).insertTextFilter(
+      fieldId: titleFieldId,
+      condition: TextFilterConditionPB.TextIsNotEmpty,
+      content: '',
+    );
+    hidden.fold((_) {}, (error) => Log.error(error));
+    if (!grouped || tagsFieldId == null) {
       return;
     }
-    const kept = {'Title', 'Status', 'Tags', 'Updated'};
-    for (final field in fields) {
-      if (!field.isPrimary && !kept.contains(field.name)) {
-        await FieldBackendService.deleteField(
-          viewId: viewId,
-          fieldId: field.id,
-        );
+    final groupedBy = await GroupBackendService(viewId).groupByField(
+      fieldId: tagsFieldId,
+      settingContent: const [],
+    );
+    groupedBy.fold((_) {}, (error) => Log.error(error));
+    await _hideDefaultGroup(viewId);
+  }
+
+  Future<void> _hideDefaultGroup(String viewId, {bool wait = false}) async {
+    final attempts = wait ? 8 : 1;
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      final groups = await DatabaseViewBackendService(viewId: viewId)
+          .loadGroups()
+          .then((result) => result.toNullable());
+      final defaults =
+          groups?.items.where((group) => group.isDefault).toList() ?? [];
+      if (defaults.isEmpty) {
+        if (!wait) {
+          return;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        continue;
       }
+      for (final group in defaults) {
+        if (!group.isVisible) {
+          continue;
+        }
+        final hidden = await GroupBackendService(viewId).updateGroup(
+          groupId: group.groupId,
+          visible: false,
+        );
+        hidden.fold((_) {}, (error) => Log.error(error));
+      }
+      return;
     }
   }
 
@@ -372,6 +589,16 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
       ..name = name
       ..color = color;
   }
+}
+
+class _WikiCard {
+  const _WikiCard(this.title, this.cover, this.year, this.month, this.day);
+
+  final String title;
+  final String cover;
+  final int year;
+  final int month;
+  final int day;
 }
 
 class _GetStartedBar extends StatelessWidget {
