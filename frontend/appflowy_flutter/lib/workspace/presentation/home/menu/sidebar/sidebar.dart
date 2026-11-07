@@ -31,6 +31,7 @@ import 'package:appflowy/workspace/presentation/home/menu/sidebar/footer/sidebar
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/header/sidebar_top_menu.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/header/sidebar_user.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/shared/sidebar_folder.dart';
+import 'package:appflowy/workspace/presentation/home/menu/sidebar/shared/sidebar_meetings_button.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/shared/sidebar_new_page_button.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/space/sidebar_space.dart';
 import 'package:appflowy/workspace/presentation/home/menu/sidebar/space/space_migration.dart';
@@ -369,6 +370,8 @@ class _SidebarState extends State<_Sidebar> {
                 child: const _SidebarSearchButton(),
               ),
             ],
+            const VSpace(2),
+            SidebarMeetingsButton(userProfile: widget.userProfile),
 
             if (context
                     .read<UserWorkspaceBloc>()
