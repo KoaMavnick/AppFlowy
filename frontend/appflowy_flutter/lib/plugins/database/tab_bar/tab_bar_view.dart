@@ -32,6 +32,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_platform/universal_platform.dart';
 
+import 'desktop/database_page_header.dart';
 import 'desktop/tab_bar_header.dart';
 import 'mobile/mobile_tab_bar_header.dart';
 
@@ -171,6 +172,16 @@ class _DatabaseTabBarViewState extends State<DatabaseTabBarView> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (UniversalPlatform.isMobile) const VSpace(12),
+                  if (!widget.shrinkWrap && UniversalPlatform.isDesktop)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding + paddingLeft,
+                        8,
+                        horizontalPadding,
+                        4,
+                      ),
+                      child: const DatabasePageHeader(),
+                    ),
                   ValueListenableBuilder<bool>(
                     valueListenable: state
                         .tabBarControllerByViewId[state.parentView.id]!

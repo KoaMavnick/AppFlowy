@@ -4,7 +4,11 @@ import 'package:appflowy/generated/flowy_svgs.g.dart';
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/plugins/database/application/field/field_info.dart';
 import 'package:appflowy/plugins/database/application/row/row_service.dart';
+import 'package:appflowy/plugins/database/domain/database_view_service.dart';
 import 'package:appflowy/plugins/database/domain/field_service.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/callout/callout_block_component.dart';
+import 'package:appflowy/plugins/document/presentation/editor_plugins/database/database_view_block_component.dart';
+import 'package:appflowy/shared/icon_emoji_picker/flowy_icon_emoji_picker.dart';
 import 'package:appflowy/startup/startup.dart';
 import 'package:appflowy/workspace/application/tabs/tabs_bloc.dart';
 import 'package:appflowy/workspace/application/view/view_ext.dart';
@@ -20,8 +24,8 @@ import 'package:nanoid/nanoid.dart';
 
 /// Bottom actions on a blank page, in the same place Notion puts
 /// "Get started with". Database replaces the page with a table, board, or
-/// calendar. Wiki replaces it with a table that already has wiki fields
-/// and a few starter pages.
+/// calendar. Wiki keeps the page, so the title, icon, and cover stay, and
+/// drops in a starter note plus a table that can switch to a board.
 class EmptyPageStarter extends StatefulWidget {
   const EmptyPageStarter({
     super.key,
@@ -89,7 +93,7 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
               ignoring: _busy,
               child: _GetStartedBar(
                 onDatabase: _openDatabaseMenu,
-                onWiki: () => _replacePage(ViewLayoutPB.Grid, wiki: true),
+                onWiki: _fillWikiDocument,
               ),
             ),
           ),
@@ -176,17 +180,98 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
     );
   }
 
-  Future<void> _replacePage(
-    ViewLayoutPB layout, {
-    bool wiki = false,
-  }) async {
+  Future<void> _fillWikiDocument() async {
+    if (_busy) {
+      return;
+    }
+    setState(() => _busy = true);
+
+    final page = widget.view;
+    if (page.name.trim().isEmpty) {
+      await ViewBackendService.updateView(viewId: page.id, name: 'Wiki');
+    }
+    await ViewBackendService.updateViewIcon(
+      view: page,
+      viewIcon: EmojiIconData.emoji('📖'),
+    );
+
+    final editor = widget.editorState;
+    final intro = editor.transaction
+      ..insertNodes([0], [
+        paragraphNode(
+          delta: Delta()
+            ..insert(
+              'Keep notes, references, and pages together. Each row below is a page you can open.',
+            ),
+        ),
+        calloutNode(
+          delta: Delta()
+            ..insert(
+              'Add a status and tags so important pages stay easy to find. Replace these sample pages with your own.',
+            ),
+          emoji: EmojiIconData.emoji('💡'),
+        ),
+        headingNode(
+          level: 2,
+          delta: Delta()..insert('Pages'),
+        ),
+      ]);
+    await editor.apply(intro);
+
+    final grid = await ViewBackendService.createView(
+      parentViewId: page.id,
+      name: 'Table',
+      layoutType: ViewLayoutPB.Grid,
+    ).then((result) => result.toNullable());
+    if (grid == null) {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+      return;
+    }
+
+    try {
+      await _applyWikiTemplate(grid.id);
+      final databaseId = await DatabaseViewBackendService(viewId: grid.id)
+          .getDatabaseId()
+          .then((result) => result.toNullable());
+      if (databaseId != null) {
+        await ViewBackendService.createDatabaseLinkedView(
+          parentViewId: grid.id,
+          databaseId: databaseId,
+          layoutType: ViewLayoutPB.Board,
+          name: 'Board',
+        );
+      }
+    } catch (error) {
+      Log.error('Wiki template was only partly applied: $error');
+    }
+
+    final block = editor.transaction
+      ..insertNode(
+        [3],
+        Node(
+          type: DatabaseBlockKeys.gridType,
+          attributes: {
+            DatabaseBlockKeys.parentID: page.id,
+            DatabaseBlockKeys.viewID: grid.id,
+          },
+        ),
+      );
+    await editor.apply(block);
+    if (mounted) {
+      setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _replacePage(ViewLayoutPB layout) async {
     if (_busy) {
       return;
     }
     setState(() => _busy = true);
 
     final source = widget.view;
-    final name = wiki && source.name.trim().isEmpty ? 'Wiki' : source.nameOrDefault;
+    final name = source.nameOrDefault;
     final result = await ViewBackendService.createView(
       parentViewId: source.parentViewId,
       name: name,
@@ -210,15 +295,6 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
     final tabs = getIt<TabsBloc>();
     tabs.openPlugin(created);
     tabs.add(TabsEvent.closeTab(source.id));
-
-    if (wiki) {
-      try {
-        await _applyWikiTemplate(created.id);
-      } catch (error) {
-        Log.error('Wiki template was only partly applied: $error');
-      }
-    }
-
     await ViewBackendService.deleteView(viewId: source.id);
   }
 
