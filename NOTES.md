@@ -25,3 +25,7 @@ cargo make --profile development-linux-x86_64 appflowy-dev
 ```
 
 The binary is `frontend/appflowy_flutter/product/0.11.4/linux/Debug/AppFlowy/AppFlowy`. The older docs say `./app_flowy`; this tree's product name is `AppFlowy`.
+
+## Running on Parrot OS
+
+The debug binary built on this Ubuntu 24.04 machine links `libdart_ffi.so` against **GLIBC_2.38** and **GLIBCXX_3.4.30**. Check the Parrot machine with `ldd --version`. If its glibc is older than 2.38, copying this build will not start. Debian 12-based Parrot releases are in that older group, so the reliable path is to build on the Parrot PC itself. Parrot uses apt, and the package names in the Ubuntu section of the Linux build doc apply. Also install `rsync` (the icon generator calls it) and, if `clang++` cannot find `<limits>`, the `g++` package that matches the GCC version Clang searches. Flutter must stay at 3.27.4. After `./AppFlowy` opens, Anonymous mode is the local-only session. No account is required.
