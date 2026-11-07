@@ -5,6 +5,7 @@ import 'package:appflowy/plugins/document/application/document_appearance_cubit.
 import 'package:appflowy/plugins/document/application/document_bloc.dart';
 import 'package:appflowy/plugins/document/presentation/banner.dart';
 import 'package:appflowy/plugins/document/presentation/editor_drop_handler.dart';
+import 'package:appflowy/plugins/document/presentation/empty_page_starter.dart';
 import 'package:appflowy/plugins/document/presentation/editor_page.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/ai/widgets/ai_writer_scroll_wrapper.dart';
 import 'package:appflowy/plugins/document/presentation/editor_plugins/cover/document_immersive_cover.dart';
@@ -185,26 +186,30 @@ class _DocumentPageState extends State<DocumentPage>
         ),
       );
     } else {
-      child = EditorDropHandler(
-        viewId: widget.view.id,
+      child = EmptyPageStarter(
+        view: widget.view,
         editorState: editorState,
-        isLocalMode: context.read<DocumentBloc>().isLocalMode,
-        child: AppFlowyEditorPage(
+        child: EditorDropHandler(
+          viewId: widget.view.id,
           editorState: editorState,
-          // if the view's name is empty, focus on the title
-          autoFocus: widget.view.name.isEmpty ? false : null,
-          styleCustomizer: EditorStyleCustomizer(
-            context: context,
-            width: width,
-            padding: EditorStyleCustomizer.documentPadding,
+          isLocalMode: context.read<DocumentBloc>().isLocalMode,
+          child: AppFlowyEditorPage(
             editorState: editorState,
+            // if the view's name is empty, focus on the title
+            autoFocus: widget.view.name.isEmpty ? false : null,
+            styleCustomizer: EditorStyleCustomizer(
+              context: context,
+              width: width,
+              padding: EditorStyleCustomizer.documentPadding,
+              editorState: editorState,
+            ),
+            header: buildCoverAndIcon(context, state),
+            initialSelection: initialSelection,
+            placeholderText: (node) =>
+                node.type == ParagraphBlockKeys.type && !node.isInTable
+                    ? LocaleKeys.editor_slashPlaceHolder.tr()
+                    : '',
           ),
-          header: buildCoverAndIcon(context, state),
-          initialSelection: initialSelection,
-          placeholderText: (node) =>
-              node.type == ParagraphBlockKeys.type && !node.isInTable
-                  ? LocaleKeys.editor_slashPlaceHolder.tr()
-                  : '',
         ),
       );
     }
