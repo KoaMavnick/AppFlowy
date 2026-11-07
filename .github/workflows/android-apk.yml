@@ -91,6 +91,11 @@ jobs:
           # standard library to the toolchain this directory actually uses.
           rustup target add aarch64-linux-android
           rustup target list --installed
+          sysroot="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+          test -f "$sysroot/usr/include/stdint.h"
+          # RocksDB's binding generator was reading the Ubuntu C headers. Point
+          # it at the Android NDK headers instead.
+          export BINDGEN_EXTRA_CLANG_ARGS_aarch64_linux_android="--target=aarch64-linux-android29 --sysroot=${sysroot} -nostdinc -isystem ${sysroot}/usr/include -isystem ${sysroot}/usr/include/aarch64-linux-android"
           mkdir -p appflowy_flutter/android/app/src/main/jniLibs
           cargo make appflowy-flutter-deps-tools
           cargo make --profile development-android appflowy-android-dev
