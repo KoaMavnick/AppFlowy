@@ -332,7 +332,7 @@ class _LeaveWorkspaceButton extends StatelessWidget {
         fontSize: 17.0,
         figmaLineHeight: 24.0,
         fontWeight: FontWeight.w500,
-        color: const Color(0xFF007AFF),
+        color: Theme.of(context).colorScheme.primary,
       ),
       rightButton: FlowyText(
         LocaleKeys.button_confirm.tr(),

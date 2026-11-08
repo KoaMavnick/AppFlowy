@@ -125,7 +125,7 @@ class EditorStyleCustomizer {
           textStyle: baseTextStyle(fontFamily).copyWith(
             fontSize: fontSize,
             fontWeight: FontWeight.normal,
-            color: Colors.red,
+            color: afThemeExtension.onBackground,
             backgroundColor:
                 theme.colorScheme.inverseSurface.withValues(alpha: 0.8),
           ),
@@ -175,7 +175,7 @@ class EditorStyleCustomizer {
           textStyle: baseTextStyle.copyWith(
             fontSize: fontSize,
             fontWeight: FontWeight.normal,
-            color: Colors.red,
+            color: afThemeExtension.onBackground,
             backgroundColor: Colors.grey.withValues(alpha: 0.3),
           ),
         ),

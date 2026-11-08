@@ -84,7 +84,7 @@ class _SaveButton extends StatelessWidget {
           onTap: onSave,
           child: FlowyText.medium(
             LocaleKeys.button_save.tr(),
-            color: const Color(0xFF00ADDC),
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ),

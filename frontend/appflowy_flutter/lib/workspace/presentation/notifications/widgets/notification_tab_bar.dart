@@ -59,10 +59,10 @@ class NotificationTabBar extends StatelessWidget {
         labelPadding: const EdgeInsets.only(right: 20),
         unselectedLabelStyle: unselectedLabelStyle,
         overlayColor: WidgetStateProperty.all(Colors.transparent),
-        indicator: const RoundUnderlineTabIndicator(
+        indicator: RoundUnderlineTabIndicator(
           width: 28.0,
           borderSide: BorderSide(
-            color: Color(0xFF00C8FF),
+            color: Theme.of(context).colorScheme.primary,
             width: 3,
           ),
         ),

@@ -53,31 +53,15 @@ const String kAppflowyCloudUrl = "https://beta.appflowy.cloud";
 ///
 Future<AuthenticatorType> getAuthenticatorType() async {
   final value = await getIt<KeyValueStorage>().get(KVKeys.kCloudType);
-  if (value == null && !integrationMode().isUnitTest) {
-    // if the cloud type is not set, then set it to AppFlowy Cloud as default.
-    await useAppFlowyBetaCloudWithURL(
-      kAppflowyCloudUrl,
-      AuthenticatorType.appflowyCloud,
-    );
-    return AuthenticatorType.appflowyCloud;
+  // Nota keeps notes on this device. A self-hosted server is the only
+  // cloud mode that stays available. AppFlowy Cloud is not used.
+  if (value == "3") {
+    return AuthenticatorType.appflowyCloudSelfHost;
   }
-
-  switch (value ?? "0") {
-    case "0":
-      return AuthenticatorType.local;
-    case "2":
-      return AuthenticatorType.appflowyCloud;
-    case "3":
-      return AuthenticatorType.appflowyCloudSelfHost;
-    case "4":
-      return AuthenticatorType.appflowyCloudDevelop;
-    default:
-      await useAppFlowyBetaCloudWithURL(
-        kAppflowyCloudUrl,
-        AuthenticatorType.appflowyCloud,
-      );
-      return AuthenticatorType.appflowyCloud;
+  if (value != "0") {
+    await _setAuthenticatorType(AuthenticatorType.local);
   }
+  return AuthenticatorType.local;
 }
 
 /// Determines whether authentication is enabled.

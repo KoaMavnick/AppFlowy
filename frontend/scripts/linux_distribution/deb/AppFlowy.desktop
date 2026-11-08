@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=AppFlowy
+Name=Nota
 Icon=/usr/share/icons/hicolor/scalable/apps/appflowy.svg
 Exec=/usr/bin/AppFlowy %U
 Categories=Network;Productivity;

@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
+set -eu
+
 LINUX_RELEASE_PRODUCTION=$1
 VERSION=$2
 PACKAGE_NAME=$3
+
+test -d "$LINUX_RELEASE_PRODUCTION/AppFlowy"
 
 # Define package folders
 PACKAGE=$LINUX_RELEASE_PRODUCTION/package

@@ -17,20 +17,13 @@ import '../startup.dart';
 class AutoUpdateTask extends LaunchTask {
   AutoUpdateTask();
 
-  static const _feedUrl =
-      'https://github.com/AppFlowy-IO/AppFlowy/releases/latest/download/appcast-{os}-{arch}.xml';
   final _listener = _AppFlowyAutoUpdaterListener();
 
   @override
   Future<void> initialize(LaunchContext context) async {
     await super.initialize(context);
 
-    // the auto updater is not supported on mobile
-    if (UniversalPlatform.isMobile) {
-      return;
-    }
-
-    // don't use await here, because the auto updater is not a blocking operation
+    // don't use await here, because the update check is not blocking
     unawaited(_setupAutoUpdater());
 
     ApplicationInfo.isCriticalUpdateNotifier.addListener(
@@ -56,24 +49,10 @@ class AutoUpdateTask extends LaunchTask {
       '[AutoUpdate] current version: ${ApplicationInfo.applicationVersion}, current cpu architecture: ${ApplicationInfo.architecture}',
     );
 
-    // Since the appcast.xml is not supported the arch, we separate the feed url by os and arch.
-    final feedUrl = _feedUrl
-        .replaceAll('{os}', ApplicationInfo.os)
-        .replaceAll('{arch}', ApplicationInfo.architecture);
-
-    // the auto updater is only supported on macOS and windows, so we don't need to check the platform
-    if (UniversalPlatform.isMacOS || UniversalPlatform.isWindows) {
-      autoUpdater.addListener(_listener);
-    }
-
-    Log.info('[AutoUpdate] feed url: $feedUrl');
-
-    versionChecker.setFeedUrl(feedUrl);
-    final item = await versionChecker.checkForUpdateInformation();
-    if (item != null) {
-      ApplicationInfo.latestAppcastItem = item;
-      ApplicationInfo.latestVersionNotifier.value =
-          item.displayVersionString ?? '';
+    final latest = await versionChecker.fetchLatestVersion();
+    if (latest != null) {
+      ApplicationInfo.latestVersionNotifier.value = latest;
+      Log.info('[AutoUpdate] latest Nota version: $latest');
     }
   }
 

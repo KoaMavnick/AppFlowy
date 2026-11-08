@@ -3,10 +3,7 @@ import 'package:flowy_infra/utils/color_converter.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'dandelion.dart';
 import 'default_colorscheme.dart';
-import 'lavender.dart';
-import 'lemonade.dart';
 
 part 'colorscheme.g.dart';
 
@@ -20,16 +17,16 @@ const Map<String, List<FlowyColorScheme>> themeMap = {
     DefaultColorScheme.dark(),
   ],
   BuiltInTheme.dandelion: [
-    DandelionColorScheme.light(),
-    DandelionColorScheme.dark(),
+    DefaultColorScheme.light(),
+    DefaultColorScheme.dark(),
   ],
   BuiltInTheme.lemonade: [
-    LemonadeColorScheme.light(),
-    LemonadeColorScheme.dark(),
+    DefaultColorScheme.light(),
+    DefaultColorScheme.dark(),
   ],
   BuiltInTheme.lavender: [
-    LavenderColorScheme.light(),
-    LavenderColorScheme.dark(),
+    DefaultColorScheme.light(),
+    DefaultColorScheme.dark(),
   ],
 };
 

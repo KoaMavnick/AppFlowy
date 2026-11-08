@@ -103,7 +103,7 @@ class UserSessionSettingGroup extends StatelessWidget {
         fontSize: 17.0,
         figmaLineHeight: 24.0,
         fontWeight: FontWeight.w500,
-        color: const Color(0xFF007AFF),
+        color: const Color(0xFF37352F),
       ),
       rightButton: FlowyText(
         LocaleKeys.button_logout.tr(),

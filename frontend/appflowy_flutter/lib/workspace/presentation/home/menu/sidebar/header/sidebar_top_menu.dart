@@ -46,22 +46,7 @@ class SidebarTopMenu extends StatelessWidget {
   }
 
   Widget _buildLogoIcon(BuildContext context) {
-    if (Platform.isMacOS) {
-      return const SizedBox.shrink();
-    }
-
-    final svgData = Theme.of(context).brightness == Brightness.dark
-        ? FlowySvgs.app_logo_with_text_dark_xl
-        : FlowySvgs.app_logo_with_text_light_xl;
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 12.0, left: 8),
-      child: FlowySvg(
-        svgData,
-        size: const Size(92, 17),
-        blendMode: null,
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildCollapseMenuButton(BuildContext context) {
