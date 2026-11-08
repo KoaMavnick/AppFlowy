@@ -170,7 +170,10 @@ class _DocumentPageState extends State<DocumentPage>
 
     final Widget child;
     if (UniversalPlatform.isMobile) {
-      child = BlocBuilder<DocumentPageStyleBloc, DocumentPageStyleState>(
+      child = EmptyPageStarter(
+        view: widget.view,
+        editorState: editorState,
+        child: BlocBuilder<DocumentPageStyleBloc, DocumentPageStyleState>(
         builder: (context, styleState) => AppFlowyEditorPage(
           editorState: editorState,
           // if the view's name is empty, focus on the title
@@ -183,6 +186,7 @@ class _DocumentPageState extends State<DocumentPage>
           ),
           header: buildCoverAndIcon(context, state),
           initialSelection: initialSelection,
+        ),
         ),
       );
     } else {

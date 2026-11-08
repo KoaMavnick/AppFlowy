@@ -138,7 +138,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     env:
-      APP_VERSION: "0.11.4"
+      APP_VERSION: "0.11.5"
     steps:
       - name: Free disk space
         run: |
@@ -193,9 +193,9 @@ jobs:
       - name: Build the Debian package
         working-directory: frontend
         run: |
-          test -x appflowy_flutter/product/0.11.4/linux/Release/AppFlowy/AppFlowy
-          bash scripts/linux_distribution/deb/build_deb.sh appflowy_flutter/product/0.11.4/linux/Release 0.11.4 AppFlowy.deb
-          cp appflowy_flutter/product/0.11.4/linux/Release/AppFlowy.deb "$GITHUB_WORKSPACE/AppFlowy.deb"
+          test -x appflowy_flutter/product/0.11.5/linux/Release/AppFlowy/AppFlowy
+          bash scripts/linux_distribution/deb/build_deb.sh appflowy_flutter/product/0.11.5/linux/Release 0.11.5 AppFlowy.deb
+          cp appflowy_flutter/product/0.11.5/linux/Release/AppFlowy.deb "$GITHUB_WORKSPACE/AppFlowy.deb"
           test "$(stat -c%s "$GITHUB_WORKSPACE/AppFlowy.deb")" -gt 20000000
 
       - name: Upload Debian package
@@ -220,7 +220,8 @@ jobs:
           find dist -name 'AppFlowy.deb' -exec cp {} AppFlowy.deb \;
           test -f AppFlowy.apk
           test -f AppFlowy.deb
-          ls -lh AppFlowy.apk AppFlowy.deb
+          printf '0.11.5\n' > version.txt
+          ls -lh AppFlowy.apk AppFlowy.deb version.txt
 
       - name: Remove previous files
         env:
@@ -228,6 +229,7 @@ jobs:
         run: |
           gh release delete-asset install AppFlowy.apk --yes --repo "$GITHUB_REPOSITORY" || true
           gh release delete-asset install AppFlowy.deb --yes --repo "$GITHUB_REPOSITORY" || true
+          gh release delete-asset install version.txt --yes --repo "$GITHUB_REPOSITORY" || true
 
       - name: Publish
         uses: softprops/action-gh-release@v2
@@ -239,6 +241,7 @@ jobs:
           files: |
             AppFlowy.apk
             AppFlowy.deb
+            version.txt
           body: |
             Android (Android 10 or newer, 64-bit): open AppFlowy.apk on the phone and tap Install.
 

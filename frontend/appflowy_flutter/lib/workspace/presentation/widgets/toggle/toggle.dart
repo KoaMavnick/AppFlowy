@@ -56,6 +56,11 @@ class Toggle extends StatelessWidget {
         ? activeBackgroundColor ?? Theme.of(context).colorScheme.primary
         : inactiveBackgroundColor ??
             AFThemeExtension.of(context).toggleButtonBGColor;
+    final resolvedThumb = thumbColor ??
+        (ThemeData.estimateBrightnessForColor(backgroundColor) ==
+                Brightness.light
+            ? const Color(0xFF191919)
+            : Colors.white);
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: Padding(
@@ -78,7 +83,7 @@ class Toggle extends StatelessWidget {
                 height: style.thumbRadius,
                 width: style.thumbRadius,
                 decoration: BoxDecoration(
-                  color: thumbColor ?? Colors.white,
+                  color: resolvedThumb,
                   borderRadius: BorderRadius.circular(style.thumbRadius / 2),
                 ),
               ),

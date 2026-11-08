@@ -262,7 +262,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 isInMonth,
                 position,
               ),
-              useAvailableVerticalSpace: widget.shrinkWrap,
+              useAvailableVerticalSpace: constraints.maxHeight.isFinite,
             ),
           ),
         );

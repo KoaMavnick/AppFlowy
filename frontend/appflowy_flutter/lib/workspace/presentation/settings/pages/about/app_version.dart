@@ -15,9 +15,14 @@ class SettingsAppVersion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ApplicationInfo.isUpdateAvailable
-        ? const _UpdateAppSection()
-        : _buildIsUpToDate(context);
+    return ValueListenableBuilder<String>(
+      valueListenable: ApplicationInfo.latestVersionNotifier,
+      builder: (context, _, __) {
+        return ApplicationInfo.isUpdateAvailable
+            ? const _UpdateAppSection()
+            : _buildIsUpToDate(context);
+      },
+    );
   }
 
   Widget _buildIsUpToDate(BuildContext context) {
@@ -124,7 +129,9 @@ class _UpdateAppSection extends StatelessWidget {
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             onTap: () {
-              afLaunchUrlString('https://www.appflowy.io/what-is-new');
+              afLaunchUrlString(
+                'https://github.com/KoaMavnick/AppFlowy/releases/tag/install',
+              );
             },
             child: FlowyText.regular(
               LocaleKeys.autoUpdate_settingsUpdateWhatsNew.tr(),

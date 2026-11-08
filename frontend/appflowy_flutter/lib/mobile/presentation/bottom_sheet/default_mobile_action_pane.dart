@@ -55,7 +55,7 @@ enum MobilePaneActionType {
         );
       case MobilePaneActionType.addToFavorites:
         return MobileSlideActionButton(
-          backgroundColor: const Color(0xFF00C8FF),
+          backgroundColor: const Color(0xFF37352F),
           svg: FlowySvgs.favorite_s,
           size: 24.0,
           onPressed: (context) {
@@ -70,7 +70,7 @@ enum MobilePaneActionType {
         );
       case MobilePaneActionType.add:
         return MobileSlideActionButton(
-          backgroundColor: const Color(0xFF00C8FF),
+          backgroundColor: const Color(0xFF37352F),
           svg: FlowySvgs.add_m,
           size: 28.0,
           onPressed: (context) {

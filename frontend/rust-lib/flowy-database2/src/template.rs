@@ -145,7 +145,11 @@ pub fn make_default_calendar(view_id: &str, name: &str) -> CreateDatabaseParams 
     .name("Tags")
     .build();
 
-  let fields = vec![text_field, date_field, multi_select_field];
+  let location_field = FieldBuilder::from_field_type(FieldType::RichText)
+    .name("Location")
+    .build();
+
+  let fields = vec![text_field, date_field, location_field, multi_select_field];
 
   let field_settings = default_field_settings_for_fields(&fields, DatabaseLayout::Calendar);
 

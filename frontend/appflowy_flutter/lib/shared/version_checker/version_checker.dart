@@ -60,15 +60,29 @@ class VersionChecker {
     return null;
   }
 
-  /// For Windows and macOS, calling this API will trigger the auto updater to check for updates
-  /// For Linux, it will open the official website in the browser if there is a new version
+  static const latestVersionUrl =
+      'https://github.com/KoaMavnick/AppFlowy/releases/download/install/version.txt';
 
+  /// Opens this fork's installer. Android still needs a tap on Install.
   Future<void> checkForUpdate() async {
-    if (UniversalPlatform.isLinux) {
-      // open the official website in the browser
-      await afLaunchUrlString('https://appflowy.com/download');
-    } else {
-      await autoUpdater.checkForUpdates();
+    final url = UniversalPlatform.isAndroid
+        ? 'https://github.com/KoaMavnick/AppFlowy/releases/download/install/AppFlowy.apk'
+        : 'https://github.com/KoaMavnick/AppFlowy/releases/download/install/AppFlowy.deb';
+    await afLaunchUrlString(url);
+  }
+
+  Future<String?> fetchLatestVersion() async {
+    try {
+      final response = await http.get(Uri.parse(latestVersionUrl));
+      if (response.statusCode != 200) {
+        Log.info('Failed to fetch Nota version: ${response.statusCode}');
+        return null;
+      }
+      final version = response.body.trim();
+      return version.isEmpty ? null : version;
+    } catch (e) {
+      Log.info('Failed to fetch Nota version: $e');
+      return null;
     }
   }
 

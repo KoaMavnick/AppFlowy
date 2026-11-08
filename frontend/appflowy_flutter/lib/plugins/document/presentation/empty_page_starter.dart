@@ -115,6 +115,7 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
               child: _GetStartedBar(
                 onDatabase: _openDatabaseMenu,
                 onWiki: _fillWikiDocument,
+                onMindMap: _fillMindMap,
               ),
             ),
           ),
@@ -199,6 +200,45 @@ class _EmptyPageStarterState extends State<EmptyPageStarter> {
         child: _MenuRow(icon: icon, label: label),
       ),
     );
+  }
+
+  Future<void> _fillMindMap() async {
+    if (_busy) {
+      return;
+    }
+    setState(() => _busy = true);
+    final page = widget.view;
+    if (page.name.trim().isEmpty) {
+      await ViewBackendService.updateView(viewId: page.id, name: 'Mind map');
+    }
+    await ViewBackendService.updateViewIcon(
+      view: page,
+      viewIcon: EmojiIconData.emoji('🧠'),
+    );
+    final branches = <String>[
+      'Notes',
+      'Images',
+      'Equations',
+    ];
+    final editor = widget.editorState;
+    final transaction = editor.transaction
+      ..insertNodes([0], [
+        paragraphNode(
+          delta: Delta()
+            ..insert(
+              'Each block below is a branch. Open it and type. Use /image for a picture and /math for an equation.',
+            ),
+        ),
+        for (final branch in branches)
+          calloutNode(
+            delta: Delta()..insert(branch),
+            emoji: EmojiIconData.emoji('🌿'),
+          ),
+      ]);
+    await editor.apply(transaction);
+    if (mounted) {
+      setState(() => _busy = false);
+    }
   }
 
   Future<void> _fillWikiDocument() async {
@@ -605,10 +645,12 @@ class _GetStartedBar extends StatelessWidget {
   const _GetStartedBar({
     required this.onDatabase,
     required this.onWiki,
+    required this.onMindMap,
   });
 
   final void Function(BuildContext buttonContext) onDatabase;
   final VoidCallback onWiki;
+  final VoidCallback onMindMap;
 
   @override
   Widget build(BuildContext context) {
@@ -622,8 +664,10 @@ class _GetStartedBar extends StatelessWidget {
           style: TextStyle(fontSize: 12, height: 1.2, color: muted),
         ),
         const VSpace(10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             Builder(
               builder: (buttonContext) => _StarterButton(
@@ -632,11 +676,15 @@ class _GetStartedBar extends StatelessWidget {
                 onTap: () => onDatabase(buttonContext),
               ),
             ),
-            const HSpace(8),
             _StarterButton(
               icon: FlowySvgs.icon_document_s,
               label: 'Wiki',
               onTap: onWiki,
+            ),
+            _StarterButton(
+              icon: FlowySvgs.icon_board_s,
+              label: 'Mind map',
+              onTap: onMindMap,
             ),
           ],
         ),
@@ -664,8 +712,11 @@ class _StarterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final labelColor =
+        isDark ? const Color(0xFF191919) : const Color(0xFF37352F);
     return Material(
-      color: theme.cardColor,
+      color: isDark ? const Color(0xFFEDEDEC) : const Color(0xFFF7F7F5),
       borderRadius: BorderRadius.circular(4),
       child: InkWell(
         onTap: onTap,
@@ -688,7 +739,7 @@ class _StarterButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.15,
-                  color: theme.textTheme.bodyMedium?.color,
+                  color: labelColor,
                 ),
               ),
             ],

@@ -305,8 +305,8 @@ extension SimpleTableColors on BuildContext {
       : const Color(0xFF44484E);
 
   Color get simpleTableMoreActionHoverColor => Theme.of(this).isLightMode
-      ? const Color(0xFF00C8FF)
-      : const Color(0xFF00C8FF);
+      ? const Color(0xFF37352F)
+      : const Color(0xFFEDEDEC);
 
   Color get simpleTableDefaultHeaderColor => Theme.of(this).isLightMode
       ? const Color(0xFFF2F2F2)

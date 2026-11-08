@@ -77,7 +77,7 @@ class MobileAppearance extends BaseAppearance {
     return ThemeData(
       useMaterial3: false,
       primaryColor: colorTheme.primary, //primary 100
-      primaryColorLight: const Color(0xFF57B5F8), //primary 80
+      primaryColorLight: accent,
       dividerColor: colorTheme.outline, //caption
       hintColor: hintColor,
       disabledColor: colorTheme.outline,
@@ -116,13 +116,15 @@ class MobileAppearance extends BaseAppearance {
             ),
           ),
           shadowColor: WidgetStateProperty.all(null),
-          foregroundColor: WidgetStateProperty.all(Colors.white),
+          foregroundColor: WidgetStateProperty.all(
+            isLight ? Colors.white : const Color(0xFF191919),
+          ),
           backgroundColor: WidgetStateProperty.resolveWith<Color>(
             (Set<WidgetState> states) {
               if (states.contains(WidgetState.disabled)) {
-                return accent;
+                return accent.withValues(alpha: 0.4);
               }
-              return colorTheme.primary;
+              return isLight ? accent : const Color(0xFFEDEDEC);
             },
           ),
         ),
